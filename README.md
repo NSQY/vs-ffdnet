@@ -11,7 +11,7 @@ Ported from https://github.com/cszn/FFDNet
 
 
 ## Installation
-Copy `vsffdnet` directory to Python's `site-packages` directory.
+`pip install --upgrade vsffdnet`
 
 
 ## Usage
