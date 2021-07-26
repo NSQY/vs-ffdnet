@@ -2,7 +2,7 @@ import numpy as np
 import os.path
 import torch
 import vapoursynth as vs
-from vsffdnet.network_ffdnet import FFDNet as net
+from .network_ffdnet import FFDNet as net
 
 
 def FFDNet(clip: vs.VideoNode, strength: float=5.0, device_type: str='cuda', device_index: int=0) -> vs.VideoNode:
@@ -40,6 +40,9 @@ def FFDNet(clip: vs.VideoNode, strength: float=5.0, device_type: str='cuda', dev
     model_path = os.path.join(os.path.dirname(__file__), 'ffdnet_color.pth')
 
     device = torch.device(device_type, device_index)
+    if device_type == 'cuda':
+        torch.backends.cudnn.enabled = True
+        torch.backends.cudnn.benchmark = True
 
     model = net(in_nc=3, out_nc=3, nc=96, nb=12, act_mode='R')
     model.load_state_dict(torch.load(model_path), strict=True)
@@ -52,13 +55,13 @@ def FFDNet(clip: vs.VideoNode, strength: float=5.0, device_type: str='cuda', dev
 
     def denoise(n: int, f: vs.VideoFrame) -> vs.VideoFrame:
         img_L = np.stack([np.asarray(f.get_read_array(plane)) for plane in range(f.format.num_planes)])
-        img_L = torch.from_numpy(img_L).float().unsqueeze(0)
+        img_L = torch.from_numpy(img_L).unsqueeze(0)
         img_L = img_L.to(device)
 
         sigma = torch.full((1,1,1,1), strength).type_as(img_L)
 
         img_E = model(img_L, sigma)
-        img_E = img_E.data.squeeze().float().cpu().numpy()
+        img_E = img_E.data.squeeze().cpu().numpy()
 
         fout = f.copy()
         for plane in range(fout.format.num_planes):
