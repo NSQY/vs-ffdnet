@@ -54,7 +54,7 @@ def FFDNet(clip: vs.VideoNode, strength: float=5.0, device_type: str='cuda', dev
     torch.cuda.empty_cache()
 
     def denoise(n: int, f: vs.VideoFrame) -> vs.VideoFrame:
-        img_L = np.stack([np.asarray(f.get_read_array(plane)) for plane in range(f.format.num_planes)])
+        img_L = np.stack([np.asarray(f[plane]) for plane in range(f.format.num_planes)])
         img_L = torch.from_numpy(img_L).unsqueeze(0)
         img_L = img_L.to(device)
 
@@ -65,7 +65,7 @@ def FFDNet(clip: vs.VideoNode, strength: float=5.0, device_type: str='cuda', dev
 
         fout = f.copy()
         for plane in range(fout.format.num_planes):
-            np.copyto(np.asarray(fout.get_write_array(plane)), img_E[plane, ...])
+            np.copyto(np.asarray(fout[plane]), img_E[plane, ...])
         return fout
 
     return clip.std.ModifyFrame(clips=clip, selector=denoise)
